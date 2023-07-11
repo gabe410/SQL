@@ -1,0 +1,211 @@
+--Name: Gabe Maturo
+--Assignment: HW2
+
+set serveroutput on;
+
+-------------
+--Drop Tables
+-------------
+drop table tips;
+drop table orders;
+drop table customer;
+drop table driver;
+drop table restaurant;
+
+---------------
+--Create Tables
+---------------
+
+--Restaurant
+create table restaurant (
+    rid int,
+    rname varchar(50),
+    strAddress varchar(50),
+    zip int,
+    primary key (rid)
+    );
+    
+--Driver   
+create table driver (
+    did int,
+    dFname varchar(50),
+    dLname varchar(50),
+    primary key (did)
+    );
+
+--Customer    
+create table customer (
+    cid int,
+    cFname varchar(50),
+    cLname varchar(50),
+    strAddress varchar(50),
+    zip int,
+    primary key (cid)
+    );
+ 
+--Orders   
+create table orders (
+    orid int,
+    rid int,
+    cid int,
+    amount number,
+    did int,
+    primary key (orid),
+    foreign key (rid) references restaurant(rid),
+    foreign key (cid) references customer(cid),
+    foreign key (did) references driver(did)
+    );
+
+--Tips    
+create table tips (
+    tipid int,
+    orid int,
+    did int,
+    tip number,
+    primary key (tipid),
+    foreign key (orid) references orders(orid),
+    foreign key (did) references driver(did)
+    );
+
+------------------    
+--Problem 0/Insert
+------------------ 
+
+--Insert Statements from HW1
+--Insert into restaurant table
+insert into restaurant values (1, 'Good Food', '100 Main St', 21250);
+insert into restaurant values (2, 'Happy Belly', '101 Main St', 21043);
+insert into restaurant values (3, 'Little Italy', '200 Plum St', 21250);
+insert into restaurant values (4, 'American', '210 Plum St', 21250);
+
+--Insert into driver table
+insert into driver values (100, 'Jack', 'Quick');
+insert into driver values (101, 'Joe', 'Buck');
+insert into driver values (102, 'Marie', 'Jones');
+insert into driver values (103, 'Pam', 'Smith');
+insert into driver values (105, 'Kumar', 'Patel');
+
+--Insert into customer table
+insert into customer values (500, 'Mary', 'Slim', '10 Main St', 21043);
+insert into customer values (510, 'Jude', 'Bigbelly', '20 Plenty St', 21042);
+insert into customer values (520, 'Pamela', 'Reddy', '20 Main St', 21043);
+insert into customer values (530, 'Ann', 'Phat', '101 Main St', 21250);
+
+--Insert into orders table
+insert into orders values (700, 1, 
+    (select cid from customer where cFname = 'Mary'), 72.80, 
+    (select did from driver where dFname = 'Jack'));
+insert into orders values (701, 1, 
+    (select cid from customer where cFname = 'Jude'), 99.00, 
+    (select did from driver where dFname = 'Marie'));
+insert into orders values (702, 1, 
+    (select cid from customer where cFname = 'Ann'), 150.60, 
+    (select did from driver where dFname = 'Pam'));
+insert into orders values (703, 2, 
+    (select cid from customer where cFname = 'Ann'), 80.00, 
+    (select did from driver where dFname = 'Kumar'));
+insert into orders values (704, 3, 
+    (select cid from customer where cFname = 'Ann'), 90.00, 
+    (select did from driver where dFname = 'Marie'));
+insert into orders values (705, 4, 
+    (select cid from customer where cFname = 'Pamela'), 100.00, 
+    (select did from driver where dFname = 'Joe'));
+insert into orders values (706, 4, 
+    (select cid from customer where cFname = 'Jude'), 134.00, 
+    (select did from driver where dFname = 'Jack'));
+insert into orders values (707, 4, 
+    (select cid from customer where cFname = 'Ann'), 66.20, 
+    (select did from driver where dFname = 'Jack'));
+    
+--Insert into tips 
+insert into tips values (1, 700, 
+    (select did from orders where orid = 700), (select amount from orders where orid = 700)*(0.2));
+insert into tips values (2, 701, 
+    (select did from orders where orid = 701), ((select amount from orders where orid = 701)*0.2));
+insert into tips values (3, 702, 
+    (select did from orders where orid = 702), ((select amount from orders where orid = 702)*0.2));
+insert into tips values (4, 703, 
+    (select did from orders where orid = 703), ((select amount from orders where orid = 703)*0.2));
+insert into tips values (5, 704, 
+    (select did from orders where orid = 704), ((select amount from orders where orid = 704)*0.2));
+insert into tips values (6, 705, 
+    (select did from orders where orid = 705), ((select amount from orders where orid = 705)*0.2));
+insert into tips values (7, 706, 
+    (select did from orders where orid = 706), ((select amount from orders where orid = 706)*0.2));
+insert into tips values (8, 707, 
+    (select did from orders where orid = 707), ((select amount from orders where orid = 707)*0.2));
+
+-----------
+--Problem 1
+-----------
+
+create or replace PROCEDURE ORDERS_AT_RESTAURANT (r_name in varchar)
+IS
+--Cursor to get the order id, amount, and driver name
+cursor c1 is select o.orid, amount, dFname from orders o, driver d, restaurant r 
+            where o.did = d.did and  o.rid = r.rid and rname = r_name ;
+o_id int;
+o_amount number;
+d_name varchar(50);
+x_id int;
+--Counter to get sum from all amounts at that restaurant
+r_counter number;
+BEGIN
+    --Checking if restaurant exists
+    select rid into x_id from restaurant where rname = r_name;
+    --Initialize counter to 0
+    r_counter := 0;
+    open c1;
+    loop
+        fetch c1 into o_id, o_amount, d_name;
+        exit when c1%notfound;
+        --Counter will continue to add the values of amounts, giving us the sum of all orders at the restaurant
+        r_counter := r_counter + o_amount;
+        dbms_output.put_line('Order ID: ' || o_id || ' Amount: ' || o_amount || ' Driver Name: ' || d_name);
+    end loop;
+        dbms_output.put_line('Total Amount from All Orders: ' || r_counter);
+    close c1; 
+EXCEPTION
+    --exception to check if restaurant exists
+    when no_data_found then
+        dbms_output.put_line('Restaurant does not exist');
+END;
+
+/
+
+--Anonymous PL/SQL program to test for Problem 1
+BEGIN
+ORDERS_AT_RESTAURANT('Good Food');
+ORDERS_AT_RESTAURANT('American');
+ORDERS_AT_RESTAURANT('Americane');
+END;
+
+/
+
+-----------
+--Problem 2
+-----------
+
+Create or replace PROCEDURE PROFIT_REPORT
+IS
+cursor c1 is select sum(amount) - sum(tip) from restaurant r, orders o, tips t 
+            where o.rid = r.rid and t.orid = o.orid;
+
+profit number;
+BEGIN
+    open c1;
+    loop
+        fetch c1 into profit;
+        exit when c1%notfound;
+        dbms_output.put_line( 'Net Profit of All Restaurants is: ' || profit);
+    end loop;
+    close c1;
+END;
+
+/
+
+--Anonymous PL/SQL program to test for Problem 2
+BEGIN
+PROFIT_REPORT;
+END;
+

@@ -1,0 +1,28 @@
+--Return names and emails of authors of the paper titled 'A novel approach of mining EHR data'
+select aname, aemail
+from author a, paper_author pa, paper p
+where a.aid = pa.aid and pa.pid = p.pid and p.title = 'A novel approach of mining EHR data';
+
+--Return reviewer ID, review decision, and review comments of the paper titled 'Comparing big data systems'
+select pr.rid, decision, rcomment
+from reviewer r, paper p, paper_review pr
+where r.rid = pr.rid and p.pid = pr.pid and p.title = 'Comparing big data systems';
+
+--Return paper title and number of authors for each paper
+select p.title, count(pa.pid)
+from paper p, paper_author pa
+where p.pid = pa.pid(+)
+group by p.title;
+
+--Return names of authors who have at least two papers
+select aname
+from author a, paper_author pa
+where a.aid = pa.aid
+group by a.aname
+having count(pa.pid) >= 2;
+
+--List names of authors who have co-authored with Dr. Chen
+select a2.aname
+from author a1, author a2, paper_author pa1, paper_author pa2
+where a1.aid = pa1.pid and pa1.pid = pa2.pid and pa2.aid = a2.aid and 
+    a1.aname = 'Dr. Chen' and a1.aid != a2.aid;

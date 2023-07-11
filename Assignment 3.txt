@@ -1,0 +1,83 @@
+--Assignment 3
+set serveroutput on;
+
+--Problem 1
+declare
+    fn int;
+    num1 int;
+    num2 int;
+    counter int;
+begin
+    fn := 0;
+    num1 := 5;
+    num2 := 2;
+    counter := 0;
+    loop
+    if counter = 0 then
+        dbms_output.put_line('F(0) = 2');
+    elsif counter = 1 then
+        dbms_output.put_line('F(1) = 5');
+    else
+        fn := 5*num1 - 4*num2;
+        num2 := num1;
+        num1 := fn;
+        dbms_output.put_line('F(' || counter || ') = ' || fn);
+    end if;
+    counter := counter + 1;
+    
+    exit when counter > 9;
+    end loop;
+    
+end;
+
+--Problem 2
+declare
+    r_num int;
+begin
+    select count(*) into r_num
+    from paper p, paper_review pr
+    where p.title = 'A novel approach of mining EHR data' and p.pid = pr.pid and pr.receive_date is null;
+    
+    if r_num = 0 then
+        dbms_output.put_line('All round 1 reviews submitted');
+    else
+        dbms_output.put_line('Number of reviews NOT submitted: ' || r_num);
+    end if;
+end;
+
+--Problem 3
+declare
+    round1 int;
+    accept1 int;
+    reject1 int;
+    cursor rd1 is select decision, rcomment from paper, paper_review
+    where paper.pid = paper_review.pid and paper.title = 'Comparing big data systems' and paper_review.round = 1;
+    d_decision paper_review.decision%type;
+    r_rcomment paper_review.rcomment%type;
+begin
+    --Number of round 1 reviews
+    select count(*) into round1 from paper p, paper_review pr
+    where p.pid = pr.pid and p.title = 'Comparing big data systems' and pr.round = 1;
+    --Number of Accept
+    select count(*) into accept1 from paper p, paper_review pr
+    where p.pid = pr.pid and p.title = 'Comparing big data systems' and pr.round = 1 and pr.decision = 1;
+    --Number of reject
+    select count(*) into reject1 from paper p, paper_review pr
+    where p.pid = pr.pid and p.title = 'Comparing big data systems' and pr.round = 1 and pr.decision = 4;
+    
+    open rd1;
+    loop
+        fetch rd1 into d_decision, r_rcomment;
+        exit when rd1%notfound;
+        dbms_output.put_line('Decision: ' || d_decision || '  Comments: ' || r_rcomment);
+    end loop;
+    close rd1;
+    
+    if accept1 = round1 then
+        dbms_output.put_line('Suggestion: Accept');
+    elsif reject1 >= 2 then
+        dbms_output.put_line('Suggestion: Reject');
+    else
+        dbms_output.put_line('Suggestion: To be decided by author');
+    end if;
+end;

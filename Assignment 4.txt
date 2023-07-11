@@ -1,0 +1,119 @@
+--Assignment 4
+--Problem 1
+create or replace function pendingReview(editor_email varchar2)
+return int
+as
+p_num int;
+count_check int;
+begin
+    select count(*) into count_check from editor e1, editor e2 
+    where e1.eid = e2.eid and e1.eemail = editor_email;
+    
+    select count(*) into p_num from paper p, editor e, paper_review pr
+    where e.eemail = editor_email and e.eid = p.eid and p.pid = pr.pid and pr.receive_date is null;
+    
+    if count_check = 0 then
+        return -1;
+    else
+        return p_num;
+    end if;
+end;
+
+/
+
+--Calling the Function
+declare
+v_email varchar2(50);
+v_count int;
+begin
+    --Test if email does not match editor ID
+    v_email := 'dan1427@yahoo.com';
+    v_count := pendingReview(v_email);
+    if v_count != -1 then
+        dbms_output.put_line(v_count || 'is the number of papers pending review');
+    else
+        dbms_output.put_line('Email does not match editor ID');
+    end if;
+    
+    --Test for matching email (Answer should be 0)
+    v_email := 'claire@gmail.com';
+    v_count := pendingReview(v_email);
+    if v_count != -1 then
+        dbms_output.put_line(v_count || ' is the number of papers pending review');
+    else
+        dbms_output.put_line('Email does not match editor ID');
+    end if;
+
+    --Test for matching email (Answer should be 3)
+    v_email := 'david@gmail.com';
+    v_count := pendingReview(v_email);
+    if v_count != -1 then
+        dbms_output.put_line(v_count || ' is the number of papers pending review');
+    else
+        dbms_output.put_line('Email does not match editor ID');
+    end if;
+end;
+
+--Problem 2
+--Sequence command
+drop sequence prid_seq;
+create sequence prid_seq start with 10;
+
+create or replace 
+    procedure assignReview(p_id paper_review.pid%type, r_id  paper_review.rid%type, 
+    v_round  paper_review.round%type, v_duedate  paper_review.due_date%type)
+is
+cursor c2 is select r.rname, a.aname from author a, paper_author pa, reviewer r, paper p 
+where p.pid = p_id and r.rid = r_id and pa.pid = p.pid and pa.aid = a.aid and a.affliation = r.raffiliation;
+v_rname reviewer.rname%type;
+v_aname author.aname%type;
+count_c1 int;
+count_c2 int;
+count_c3 int;
+stop_condition int;
+begin
+    stop_condition := 0;
+    select count(*) into count_c1 from paper_review where pid = p_id;
+    select count(*) into count_c2 from paper_review where rid = r_id;
+    select count(*) into count_c3 from paper_review where round = v_round and pid = p_id and rid = r_id;
+    
+    if count_c1 = 0 then
+        dbms_output.put_line('Wrong paper');
+        stop_condition := 1;    
+    elsif count_c2 = 0 then
+        dbms_output.put_line('Wrong reviewer ID');
+        stop_condition := 1;   
+    elsif count_c1 > 0 and count_c2 > 0 and count_c3 > 0 then
+        dbms_output.put_line('Already assigned');
+        stop_condition := 1;
+   else
+        open c2;
+        loop
+            fetch c2 into v_rname, v_aname;
+            exit when c2%notfound;
+            dbms_output.put_line(v_rname || ' and ' || v_aname || 'have conflict of interest');
+            stop_condition := 1;
+        end loop;
+        close c2;
+    end if;
+    
+    if stop_condition = 1 then
+        dbms_output.put_line('Program exited');
+    else
+        insert into paper_review values(prid_seq.nextval, p_id, r_id, v_duedate, null, v_round, null, null);
+    end if;
+end;
+
+/
+
+--Test Cases
+--Test Case 1
+exec assignReview(5,5,5, date '2021-2-3');
+--Test Case 2
+exec assignReview(1,5,5, date '2021-2-3');
+--Test Case 3
+exec assignReview(1,4,1, date '2021-2-3');
+--Test Case 4
+exec assignReview(1,5,2, date '2021-2-3');
+--Test Case 5
+exec assignReview(1,3,2, date '2021-2-3');

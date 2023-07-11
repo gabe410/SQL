@@ -1,0 +1,90 @@
+--Drop Tables
+drop table paper_review;
+drop table paper_author;
+drop table paper;
+drop table author;
+drop table editor;
+drop table reviewer;
+
+--Create Tables
+create table author(
+    aid int,
+    aname char(30),
+    aemail varchar(30),
+    affiliation char(30),
+    primary key (aid));
+    
+create table editor(
+    eid int,
+    ename char(30),
+    eemail varchar(30),
+    primary key (eid));
+    
+create table paper(
+    pid int,
+    title char(30),
+    eid int,
+    submit_date date,
+    status int
+        check(status in ('1', '2', '3', '4')),
+    primary key (pid),
+    foreign key (eid) references editor(eid));
+    
+create table paper_author(
+    pid int,
+    aid int,
+    primary key (pid,aid),
+    foreign key (aid) references author);
+    
+create table reviewer(
+    rid int,
+    rname char(30),
+    remail varchar(30),
+    raffiliation char(30),
+    primary key (rid));
+    
+create table paper_review (
+    prid int,
+    pid int,
+    rid int,
+    due_date date,
+    receive_date date,
+    round int
+        check(round in ('1','2')),
+    decision int
+        check(decision in ('1', '2', '3', '4')),
+    rcomment char(150),
+    primary key (prid),
+    foreign key (pid) references paper(pid),
+    foreign key (rid) references reviewer(rid));
+
+--Insert statements
+--author
+insert into author values (1,'Jake','jman1@gmail.com','iup');
+insert into author values (2,'Shanel','shanel@umbc.edu','umbc');
+insert into author values (3,'Quantrell','qjceltic@umbc.edu','umbc');
+
+--editor
+insert into editor values (1,'Dan','danman@gmail.com');
+insert into editor values (2,'Bubba','bubnichs@hacc.edu');
+insert into editor values (3,'Julia','julia25@gmail.com');
+
+--paper
+insert into paper values (1,'Green Eggs and Ham',1,date '2021-2-3',3);
+insert into paper values (2,'NBA History',3,date '2020-4-11',2);
+insert into paper values (3,'TBT Legends',2,date '2018-5-31',4);
+
+--paper_author
+insert into paper_author values (1,3);
+insert into paper_author values (2,1);
+insert into paper_author values (3,2);
+
+--reviewer
+insert into reviewer values (1,'Devin','devin23@gmail.com','psu');
+insert into reviewer values (2,'Mary','ma453@umbc.edu','umbc');
+insert into reviewer values (3,'Luke','kobe824@gmail.com','duke');
+
+--paper_review
+insert into paper_review values (1,1,2,date '2020-2-9',date '2019-12-24',1,2,'Great Paper');
+insert into paper_review values (2,3,1,date '2021-2-9',date '2019-1-22',1,4,'Good Job');
+insert into paper_review values (3,2,3,date '2019-4-9',date '2019-3-17',2,1,'I loved this paper');

@@ -1,0 +1,143 @@
+--Create Tables
+
+--Restaurant
+create table restaurant (
+    rid int,
+    rname varchar(30),
+    strAddress varchar(40),
+    zip int,
+    primary key (rid)
+    );
+    
+--Driver   
+create table driver (
+    did int,
+    dFname varchar(30),
+    dLname varchar(30),
+    primary key (did)
+    );
+
+--Customer    
+create table customer (
+    cid int,
+    cFname varchar(30),
+    cLname varchar(30),
+    strAddress varchar(40),
+    zip int,
+    primary key (cid)
+    );
+ 
+--Orders   
+create table orders (
+    orid int,
+    rid int,
+    cid int,
+    amount number,
+    did int,
+    primary key (orid),
+    foreign key (rid) references restaurant(rid),
+    foreign key (cid) references customer(cid),
+    foreign key (did) references driver(did)
+    );
+
+--Tips    
+create table tips (
+    tid int,
+    orid int,
+    did int,
+    tip number,
+    primary key (tid),
+    foreign key (orid) references orders(orid),
+    foreign key (did) references driver(did)
+    );
+    
+--Insert into restaurant table
+insert into restaurant values (1, 'Good Food', '100 Main St', 21250);
+insert into restaurant values (2, 'Happy Belly', '101 Main St', 21043);
+insert into restaurant values (3, 'Little Italy', '200 Plum St', 21250);
+insert into restaurant values (4, 'American', '210 Plum St', 21250);
+
+--Insert into driver table
+insert into driver values (100, 'Jack', 'Quick');
+insert into driver values (101, 'Joe', 'Buck');
+insert into driver values (102, 'Marie', 'Jones');
+insert into driver values (103, 'Pam', 'Smith');
+insert into driver values (105, 'Kumar', 'Patel');
+
+--Insert into customer table
+insert into customer values (500, 'Mary', 'Slim', '10 Main St', 21043);
+insert into customer values (510, 'Jude', 'Bigbelly', '20 Plenty St', 21042);
+insert into customer values (520, 'Pamela', 'Reddy', '20 Main St', 21043);
+insert into customer values (530, 'Ann', 'Phat', '101 Main St', 21250);
+
+--Insert into orders table
+insert into orders values (700, 1, 
+    (select cid from customer where cFname = 'Mary'), 72.80, 
+    (select did from driver where dFname = 'Jack'));
+insert into orders values (701, 1, 
+    (select cid from customer where cFname = 'Jude'), 99.00, 
+    (select did from driver where dFname = 'Marie'));
+insert into orders values (702, 1, 
+    (select cid from customer where cFname = 'Ann'), 150.60, 
+    (select did from driver where dFname = 'Pam'));
+insert into orders values (703, 2, 
+    (select cid from customer where cFname = 'Ann'), 80.00, 
+    (select did from driver where dFname = 'Kumar'));
+insert into orders values (704, 3, 
+    (select cid from customer where cFname = 'Ann'), 90.00, 
+    (select did from driver where dFname = 'Marie'));
+insert into orders values (705, 4, 
+    (select cid from customer where cFname = 'Pamela'), 100.00, 
+    (select did from driver where dFname = 'Joe'));
+insert into orders values (706, 4, 
+    (select cid from customer where cFname = 'Jude'), 134.00, 
+    (select did from driver where dFname = 'Jack'));
+insert into orders values (707, 4, 
+    (select cid from customer where cFname = 'Ann'), 66.20, 
+    (select did from driver where dFname = 'Jack'));
+    
+--Insert into tips 
+insert into tips values (1, 700, 
+    (select did from orders where orid = 700), (select amount from orders where orid = 700)*(0.2));
+insert into tips values (2, 701, 
+    (select did from orders where orid = 701), ((select amount from orders where orid = 701)*0.2));
+insert into tips values (3, 702, 
+    (select did from orders where orid = 702), ((select amount from orders where orid = 702)*0.2));
+insert into tips values (4, 703, 
+    (select did from orders where orid = 703), ((select amount from orders where orid = 703)*0.2));
+insert into tips values (5, 704, 
+    (select did from orders where orid = 704), ((select amount from orders where orid = 704)*0.2));
+insert into tips values (6, 705, 
+    (select did from orders where orid = 705), ((select amount from orders where orid = 705)*0.2));
+insert into tips values (7, 706, 
+    (select did from orders where orid = 706), ((select amount from orders where orid = 706)*0.2));
+insert into tips values (8, 707, 
+    (select did from orders where orid = 707), ((select amount from orders where orid = 707)*0.2));
+
+
+--SQL Queries
+
+--Question 1
+select rname
+from restaurant
+where zip = 21250;
+
+--Question 2
+select rname
+from restaurant r, customer c, orders o
+where c.cid = o.cid and r.rid = o.rid and cFname = 'Jude';
+
+--Question 3
+select dfname, dlname, sum(tip)
+from tips t, driver d
+where t.did = d.did
+group by dfname, dlname
+order by sum(tip) desc;
+
+--Drop commands
+drop table tips;
+drop table orders;
+drop table customer;
+drop table driver;
+drop table restaurant;
+
